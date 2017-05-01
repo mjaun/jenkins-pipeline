@@ -1,0 +1,22 @@
+node {
+    stage 'Checkout sources'
+    checkout scm
+    sh 'git submodule update --init --recursive' 
+
+    dir('demo_app') {
+        stage 'Prepare build environment'
+        def env
+        dir('env') { env = docker.build 'calculator_build' }
+
+        env.inside {
+            stage 'Build application'
+            sh 'cmake . && make'
+
+            stage 'Run unit tests'
+            sh 'make test'
+
+            stage 'Archive artifacts'
+            archiveArtifacts 'bin/calculator_app'
+        }
+    }
+}
